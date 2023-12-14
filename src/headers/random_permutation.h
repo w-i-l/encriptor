@@ -7,6 +7,7 @@ typedef struct {
 } permutation;
 
 permutation random_permutation(char*, size_t);
+char* decode_permutation(permutation, size_t);
 
 void free_permutation(permutation);
 

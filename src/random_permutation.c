@@ -37,6 +37,17 @@ permutation random_permutation(char* array, size_t array_size) {
     return to_return;
 }
 
+char* decode_permutation(permutation p, size_t array_size) {
+    char* to_return = (char*) malloc(array_size * sizeof(char) + 1);
+    
+    for(size_t i = 0; i < array_size; i++) {
+        to_return[p.int_permutation[i]] = p.char_permutation[i];
+    }
+
+    to_return[array_size] = '\0';
+    return to_return;
+}
+
 void free_permutation(permutation p){
     free(p.char_permutation);
     free(p.int_permutation);

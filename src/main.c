@@ -1,13 +1,26 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include "headers/random_permutation.h"
+#include "headers/coder.h"
 
 int main(void) {
-    char array[] = "Hello";
-    size_t size = sizeof(array) / sizeof(array[0]);
 
-    permutation returned = random_permutation(array, size);
-    print_permutation(returned);
-    free_permutation(returned);
-    
+        char input_file[] = "file.txt";
+        char output_file[] = "encoded.txt";
+        char permutation_file[] = "permutation.txt";
+        char decoded_file[] = "decoded.txt";
+
+    encode(input_file, output_file, permutation_file);
+    decode(output_file, decoded_file, permutation_file);
+
+    // char c[] = "whatsoever.";
+    // permutation p = random_permutation(c, strlen(c));
+
+    // print_permutation(p);
+
+    // char* decoded = decode_permutation(p, strlen(c));
+    // printf("%s\n", decoded);
+
     return 0;
 }
