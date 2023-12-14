@@ -4,6 +4,8 @@
 #include "headers/random_permutation.h"
 #include "headers/coder.h"
 
+#define BUFFER_SIZE 5000
+
 void encode(const char* input_file, const char* output_file, const char* permutation_file) {
     FILE* input = fopen(input_file, "r");
     FILE* permutations = fopen(permutation_file, "w");
@@ -38,12 +40,12 @@ void encode(const char* input_file, const char* output_file, const char* permuta
         }
 
         for(size_t i = 0; i < size; i++) {
-            if(fprintf(permutations, "%d-", aux_permutation.int_permutation[i]) == 0) {
+            if(fprintf(permutations, "-%d", aux_permutation.int_permutation[i]) == 0) {
                 printf("Error writing to file\n");
                 return;
             }
         }
-        fprintf(permutations, " ");
+        fprintf(permutations, "- ");
 
     } while(!feof(input));
 
@@ -102,7 +104,12 @@ void decode(const char* input_file, const char* output_file, const char* permuta
             i++;
         }
 
+        printf("size: %d\n", index);
         decoded_buffer = decode_permutation(aux_permutation, index);
+        printf("%s -> %s\n", buffer, decoded_buffer);
+        for(int i = 0; i < index; i++)
+            printf("%d ", aux_permutation.int_permutation[i]);
+        printf("\n\n");
 
         if(fprintf(decoded, "%s ", decoded_buffer) == 0) {
             printf("Error writing to file\n");
@@ -110,6 +117,7 @@ void decode(const char* input_file, const char* output_file, const char* permuta
         }
 
         free(aux_permutation.int_permutation);
+        free(decoded_buffer);
 
     } while(!feof(input));
 

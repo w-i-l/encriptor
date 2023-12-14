@@ -14,7 +14,6 @@ int main(void) {
     encode(input_file, output_file, permutation_file);
     decode(output_file, decoded_file, permutation_file);
 
-    // char c[] = "whatsoever.";
     // permutation p = random_permutation(c, strlen(c));
 
     // print_permutation(p);
