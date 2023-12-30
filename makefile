@@ -9,6 +9,9 @@ CC = clang
 # Compiler flags
 CFLAGS = -Wall -Wextra -Werror -pedantic -std=c99 -g
 
+# Debug flags - no flags
+DFLAGS = -O0
+
 # Source files
 SRC = $(wildcard src/*.c)
 
@@ -28,6 +31,10 @@ obj/%.o: src/%.c
 
 # Run the main executable
 run: all
+	./$(MAIN)
+
+debug:
+	$(CC) $(DFLAGS) $(SRC) -o $(MAIN)
 	./$(MAIN)
 
 # Remove all the object files and the main executable

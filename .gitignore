@@ -54,3 +54,5 @@ dkms.conf
 
 # the main executable
 main
+
+./vscode

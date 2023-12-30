@@ -1,8 +1,6 @@
 import re
 
 def format_file(filename):
-    # betweemn all the wrods can be only one space
-    # should keep all the special characters
 
     with open(filename, 'r') as f:
         text = f.read()
