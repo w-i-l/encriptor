@@ -10,7 +10,7 @@ CC = clang
 CFLAGS = -Wall -Wextra -Werror -pedantic -std=c99 -g
 
 # Debug flags - no flags
-DFLAGS = -O0
+DFLAGS = -g
 
 # Source files
 SRC = $(wildcard src/*.c)

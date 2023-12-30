@@ -11,7 +11,7 @@
 #include "headers/coder.h"
 #include "headers/coder_multiprocess.h"
 
-#define MAX_PROCESS 10
+#define MAX_PROCESS 6
 #define ADDITIONAL_SAFETY_SIZE 100
 #define PERMUTATION_FILE_SCALE_FACTOR 3
 #define BUFFER_SIZE 5000
@@ -77,7 +77,6 @@ process_segment_info* initialise_processes_segments(const char* input_file) {
             segments[current_segment_index].no_of_chars = current_segment_no_of_chars;
             segments[current_segment_index].begin_offset = current_segment_begin_offset;
             segments[current_segment_index].segment_length = current_segment_size;
-            segments[current_segment_index].permutations = (permutation*) malloc(current_segment_no_of_words * sizeof(permutation));
 
             current_segment_index++;
             current_segment_begin_offset += current_segment_size;
@@ -119,7 +118,6 @@ char* get_mapped_file(const char* file) {
     stat(file, &st);
     size_t file_size = st.st_size;
 
-    size_t page_size = getpagesize();
     size_t mapped_file_size = round_to_page_size(file_size + ADDITIONAL_SAFETY_SIZE);
     char* mapped_file = (char*) mmap(
         NULL, 
@@ -139,19 +137,42 @@ char* get_mapped_file(const char* file) {
     return mapped_file;
 }
 
-void encode_multiprocess(const char* input_file, const char* output_file, const char* permutation_file) {
+void encode_multiprocess(const char* input_file, const char* output_file) {
     
     process_segment_info* segments = initialise_processes_segments(input_file);
     if(segments == NULL) {
         printf("Error initialising process segments\n");
         return;
     }
+
+    size_t total_size = 0;
+        for(int j = 0; j < MAX_PROCESS; j++) {
+            total_size += segments[j].no_of_words;
+    }
+    total_size += ADDITIONAL_SAFETY_SIZE;
+    printf("Total size: %ld\n", total_size);
+    permutation* shared_permutations = (permutation*) mmap(
+        NULL,
+        total_size * sizeof(permutation),
+        PROT_READ | PROT_WRITE,
+        MAP_SHARED | MAP_ANONYMOUS,
+        -1,
+        0
+    );
+    if(shared_permutations == MAP_FAILED) {
+        printf("Error mapping shared memory\n");
+        printf("Error code: %s\n", strerror(errno));
+        return;
+    }
     
     char* mapped_file = get_mapped_file(input_file);
     if(mapped_file == NULL) {
         printf("Error getting mapped file\n");
+        free(segments);
         return;
     }
+
+    // print_process_segment_info(segments);
 
     pid_t pids[MAX_PROCESS];
     for(int i = 0; i < MAX_PROCESS; i++) {
@@ -166,11 +187,17 @@ void encode_multiprocess(const char* input_file, const char* output_file, const 
 
         if(pid == 0) {
 
+            size_t offset = 0;
+            for(int j = 0; j < i; j++) {
+                offset += segments[j].no_of_words;
+            }
+
             printf("Child process %d with PID: %d has started.\n", i, getpid());
 
             char* segment = mapped_file + segments[i].begin_offset;
 
-            for(int j = 0;j < segments[i].no_of_words;j++) {
+            // printf("The limit offset for the curremt process is: %ld\n", offset + segments[i].no_of_words);
+            for(int j = 0; j < segments[i].no_of_words; j++) {
                 permutation aux_permutation;
 
                 size_t size = 0;
@@ -179,48 +206,50 @@ void encode_multiprocess(const char* input_file, const char* output_file, const 
 
                 aux_permutation = random_permutation(segment, size);
 
-                segments[i].permutations[j] = aux_permutation;
-                print_permutation(segments[i].permutations[j]);
+                // if(printf("Process %d with PID: %d has generated permutation with offset: %ld\n", i, getpid(), offset + j) < 0) {
+                //     printf("Error printing to stdout\n");
+                //     _exit(0);
+                // }
+
+                if(offset + j >= total_size) {
+                    printf("Error offset is bigger than total size\n");
+                    _exit(0);
+                }
+                shared_permutations[offset + j] = aux_permutation;
+                // print_permutation(shared_permutations[offset + j]);
+
                 segment += size;
+                if((size_t)(segment - mapped_file) > segments[i].segment_length + segments[i].begin_offset) {
+                    printf("Error segment is bigger than segment length\n");
+                    _exit(0);
+                }
             }
             _exit(0);
         }
     }
-
-    print_process_segment_info(segments);
-
-    FILE* encoded = fopen(output_file, "w");
-    FILE* permutations = fopen(permutation_file, "w");
+    printf("Back to parent process\n");
 
     for(int i = 0; i < MAX_PROCESS; i++) {
         pid_t pid = wait(NULL);
-
-        // free the memory for the specific process
-        for(int j = 0; j < MAX_PROCESS; j++) {
-            if(pids[j] == pid) {
-
-                printf("Starting to write for process %d with PID: %d\n", i, pid);
-
-                for(int k = 0; k < segments[j].no_of_words; k++) {
-                    printf("Writing permutation %d for process %d with PID: %d - word: %s\n", k, i, pid, segments[j].permutations[k].char_permutation);
-                    if(fprintf(encoded, "%s ", segments[j].permutations[k].char_permutation) == 0) {
-                        printf("Error writing to file\n");
-                        return;
-                    }
-                }
-
-
-                for(int k = 0; k < segments[j].no_of_words; k++) {
-                    free_permutation(segments[j].permutations[k]);
-                }
-                free(segments[j].permutations);
-            }
+        if(pid == -1) {
+            printf("Error waiting for child process\n");
+            printf("Error code: %s\n", strerror(errno));
+            return;
         }
-        printf("Freed memory for process %d\n", i);
 
         printf("Child process %d with PID: %d has finished.\n\n", i, pid);
     }
 
+    FILE* encoded = fopen(output_file, "w");
+    for(size_t i = 0; i < total_size; i++) {
+        if(fprintf(encoded, "%s ", shared_permutations[i].char_permutation) == 0) {
+            printf("Error writing to file\n");
+            return;
+        }
+    }
+
     fclose(encoded);
-    fclose(permutations);
+    munmap(mapped_file, total_size);
+    munmap(shared_permutations, total_size * sizeof(permutation));
+    free(segments);
 }
