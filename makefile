@@ -1,43 +1,38 @@
-# compile all the c files from src directory, place the .o files in obj directory, and have the main exe in the root directory
-# make clean to remove all .o files and the main exe
-# make run to run the main exe
-# make all to compile and run the main exe
+# Compiler and flags
+CC = gcc
+CFLAGS = -I$(HEADERS_DIR)
 
-# Compiler
-CC = clang
+# Directories
+SRC_DIR = src
+HEADERS_DIR = $(SRC_DIR)/headers
+SOURCES_DIR = $(SRC_DIR)/sources
+OBJ_DIR = obj
 
-# Compiler flags
-CFLAGS = -Wall -Wextra -Werror -pedantic -std=c99 -g
+# Source and object files
+SOURCES = $(wildcard $(SOURCES_DIR)/*.c) $(SRC_DIR)/main.c $(SRC_DIR)/random_permutation.c
+OBJECTS = $(patsubst $(SRC_DIR)/%.c,$(OBJ_DIR)/%.o,$(SOURCES))
 
-# Debug flags - no flags
-DFLAGS = -g
+# Executable name
+TARGET = main
 
-# Source files
-SRC = $(wildcard src/*.c)
+# Default target
+all: $(TARGET)
 
-# Object files
-OBJ = $(SRC:src/%.c=obj/%.o)
+# Linking the executable
+$(TARGET): $(OBJECTS)
+	$(CC) $(OBJECTS) -o $(TARGET)
 
-# Main executable
-MAIN = main
-
-# Compile all the object files and link them to the main executable
-all: $(OBJ)
-	$(CC) $(CFLAGS) $(OBJ) -o $(MAIN)
-
-# Compile all the object files
-obj/%.o: src/%.c
+# Compiling object files
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
+	@mkdir -p $(@D)
 	$(CC) $(CFLAGS) -c $< -o $@
 
-# Run the main executable
-run: all
-	./$(MAIN)
-
-debug:
-	$(CC) $(DFLAGS) $(SRC) -o $(MAIN)
-	./$(MAIN)
-
-# Remove all the object files and the main executable
+# Clean up
 clean:
-	rm -f $(OBJ) $(MAIN)
+	rm -rf $(OBJ_DIR) $(TARGET)
 
+# Run the executable
+run: $(TARGET)
+	./$(TARGET)
+
+.PHONY: all clean run
