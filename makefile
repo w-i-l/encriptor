@@ -12,8 +12,9 @@ OBJ_DIR = obj
 SOURCES = $(wildcard $(SOURCES_DIR)/*.c) $(SRC_DIR)/main.c
 OBJECTS = $(patsubst $(SRC_DIR)/%.c,$(OBJ_DIR)/%.o,$(patsubst $(SOURCES_DIR)/%.c,$(OBJ_DIR)/%.o,$(SOURCES)))
 
-# Executable name
-TARGET = main
+# Executable name and path
+TARGET_DIR = $(SRC_DIR)
+TARGET = $(TARGET_DIR)/main
 
 # Default target
 all: $(TARGET)
