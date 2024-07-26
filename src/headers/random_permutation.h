@@ -1,15 +1,19 @@
 #ifndef RANDOM_PERMUTATION_H
 #define RANDOM_PERMUTATION_H
 
-#define PERMUTATION_ARRAY_MAX_SIZE 500
+#include <stdio.h>
 
 typedef struct {
-    char char_permutation[PERMUTATION_ARRAY_MAX_SIZE];
-    int int_permutation[PERMUTATION_ARRAY_MAX_SIZE];
+    char* char_permutation;
+    int* int_permutation;
+    size_t length;
 } permutation;
 
-permutation random_permutation(char*, size_t);
-char* decode_permutation(permutation, size_t);
+permutation create_permutation(char*, int*);
+permutation create_empty_permutation(char*);
+
+permutation random_permutation(char*);
+char* decode_permutation(permutation);
 
 void free_permutation(permutation);
 

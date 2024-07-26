@@ -1,6 +1,6 @@
 # Compiler and flags
 CC = gcc
-CFLAGS = -I$(HEADERS_DIR)
+CFLAGS = -Wall -Wextra
 
 # Directories
 SRC_DIR = src
@@ -9,8 +9,8 @@ SOURCES_DIR = $(SRC_DIR)/sources
 OBJ_DIR = obj
 
 # Source and object files
-SOURCES = $(wildcard $(SOURCES_DIR)/*.c) $(SRC_DIR)/main.c $(SRC_DIR)/random_permutation.c
-OBJECTS = $(patsubst $(SRC_DIR)/%.c,$(OBJ_DIR)/%.o,$(SOURCES))
+SOURCES = $(wildcard $(SOURCES_DIR)/*.c) $(SRC_DIR)/main.c
+OBJECTS = $(patsubst $(SRC_DIR)/%.c,$(OBJ_DIR)/%.o,$(patsubst $(SOURCES_DIR)/%.c,$(OBJ_DIR)/%.o,$(SOURCES)))
 
 # Executable name
 TARGET = main
@@ -20,11 +20,19 @@ all: $(TARGET)
 
 # Linking the executable
 $(TARGET): $(OBJECTS)
+	@echo "Linking: $(OBJECTS)"
 	$(CC) $(OBJECTS) -o $(TARGET)
 
-# Compiling object files
+# Compiling object files from src directory (for main.c)
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 	@mkdir -p $(@D)
+	@echo "Compiling: $<"
+	$(CC) $(CFLAGS) -c $< -o $@
+
+# Compiling object files from sources directory
+$(OBJ_DIR)/%.o: $(SOURCES_DIR)/%.c $(HEADERS_DIR)/%.h
+	@mkdir -p $(@D)
+	@echo "Compiling: $<"
 	$(CC) $(CFLAGS) -c $< -o $@
 
 # Clean up
@@ -35,4 +43,9 @@ clean:
 run: $(TARGET)
 	./$(TARGET)
 
-.PHONY: all clean run
+# Debug info
+debug:
+	@echo "Sources: $(SOURCES)"
+	@echo "Objects: $(OBJECTS)"
+
+.PHONY: all clean run debug

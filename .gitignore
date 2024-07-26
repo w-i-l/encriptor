@@ -56,3 +56,7 @@ dkms.conf
 main
 
 ./vscode
+
+# C++
+*.c++
+*.cpp
