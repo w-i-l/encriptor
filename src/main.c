@@ -5,16 +5,27 @@
 #include "headers/random_permutation.h"
 #include "headers/coder.h"
 #include "headers/coder_multiprocess.h"
+#include "headers/segmentation.h"
 
 int main(void) {
-    char word[] = "Hello, World!";
-    permutation p = random_permutation(word);
-    print_permutation(p);
+    char input_filename[] = "files/file.txt";
+    char output_filename[] = "files/verification.txt";
+    int process_count = 1;
 
-    char* decoded = decode_permutation(p);
-    printf("Decoded: %s\n", decoded);
+    process_segment_info* segments = get_segments_for_file(input_filename, process_count);
 
-    free_permutation(p);
+    for(int i = 0; i < process_count; i++) {
+        print_segment_info(segments[i]);
+        printf("\n");
+    }
+
+    copy_file_segment(input_filename, output_filename, segments, process_count);
+    size_t sum = 0;
+    for(int i = 0; i < process_count; i++) {
+        sum += segments[i].segment_length;
+    }
+    printf("Sum: %ld\n", sum);
+    printf("Is file segmented correctly: %d\n", is_file_segmented_correctly(input_filename, segments, process_count));
 
     return 0;
 }
