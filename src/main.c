@@ -21,7 +21,9 @@ int main(void) {
     // char decoded_file[] = "decoded.txt";
     signal(SIGSEGV, segfault_handler);
     // encode(input_file, output_file, permutation_file);
-    encode_multiprocess(input_file, output_file);
+    // encode_multiprocess(input_file, output_file);
+    printf("Trying to run");
+    permutation p = random_permutation("ana are mere", strlen("ana are mere"));
     // decode(output_file, decoded_file, permutation_file);
 
     // char c[] = "ana are mere";
