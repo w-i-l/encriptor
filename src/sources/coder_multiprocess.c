@@ -45,7 +45,7 @@ int encode_multiprocess(const char* input_file, const char* permutations_filenam
         return -1;
     }
 
-    FILE* output = fopen(output_file, "w");
+    FILE* output = fopen(permutations_filename, "w");
     if (output == NULL) {
         perror("Error opening output file");
         munmap(input_map, sb.st_size);
@@ -159,7 +159,7 @@ int encode_multiprocess(const char* input_file, const char* permutations_filenam
     printf("Back to Parent process\n");
     printf("Writing output\n");
 
-    write_permutations_to_file(output_file, "files/encoded.txt", shared_memory->permutations, shared_memory->total_words);
+    write_permutations_to_file(permutations_filename, encoded_filename, shared_memory->permutations, shared_memory->total_words);
 
     // for (size_t i = 0; i < shared_memory->total_words - 1; i++) {
     //     char* decoded = decode_permutation(shared_memory->permutations[i]);

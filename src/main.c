@@ -13,6 +13,7 @@ int main(void) {
     char input_filename[] = "files/file.txt";
     char permutations_filename[] = "files/permutations.txt";
     char encoded_filename[] = "files/encoded.txt";
+    char output_filename[] = "files/decoded.txt";
     int process_count = 30;
 
     process_segment_info* segments = get_segments_for_file(input_filename, process_count);
@@ -21,13 +22,13 @@ int main(void) {
         print_segment_info(segments[i]);
         printf("\n");
     }
-    printf("Is file segmented correctly: %d\n", is_file_segmented_correctly(input_filename, segments, process_count));
+    // printf("Is file segmented correctly: %d\n", is_file_segmented_correctly(input_filename, segments, process_count));
 
-    int shm_fd = encode_multiprocess(input_filename, output_filename, segments, process_count);
-    if(shm_fd == -1) {
-        perror("Error encoding file");
-        return 1;
-    }
+    // int shm_fd = encode_multiprocess(input_filename, output_filename, segments, process_count);
+    // if(shm_fd == -1) {
+    //     perror("Error encoding file");
+    //     return 1;
+    // }
 
     // permutation p = random_permutation(input_filename);
     // print_permutation(p);
