@@ -3,9 +3,11 @@
 
 #include <stdio.h>
 
+#define MAX_PERMUTATION_LENGTH 500
+
 typedef struct {
-    char* char_permutation;
-    int* int_permutation;
+    char char_permutation[MAX_PERMUTATION_LENGTH];
+    int int_permutation[MAX_PERMUTATION_LENGTH];
     size_t length;
 } permutation;
 

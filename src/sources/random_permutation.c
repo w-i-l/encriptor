@@ -7,8 +7,6 @@ permutation create_permutation(char* word, int* sequence) {
     permutation p;
 
     size_t input_size = strlen(word);
-    p.char_permutation = (char*) malloc(input_size * sizeof(char) + 1);
-    p.int_permutation = (int*) malloc(input_size * sizeof(int));
 
     strcpy(p.char_permutation, word);
     memcpy(p.int_permutation, sequence, input_size * sizeof(int));
@@ -21,8 +19,6 @@ permutation create_empty_permutation(char* word) {
     permutation p;
 
     size_t input_size = strlen(word);
-    p.char_permutation = (char*) malloc(input_size * sizeof(char) + 1);
-    p.int_permutation = (int*) malloc(input_size * sizeof(int));
     p.length = input_size;
 
     strcpy(p.char_permutation, word);
@@ -34,8 +30,6 @@ permutation create_empty_permutation(char* word) {
 }
 
 void free_permutation(permutation p) {
-    free(p.char_permutation);
-    free(p.int_permutation);
 }
 
 permutation random_permutation(char* word) {
@@ -56,17 +50,35 @@ permutation random_permutation(char* word) {
 
     to_return.char_permutation[input_size - 1] = '\0';
 
+        // print_permutation(to_return);
+
+
     return to_return;
 }
 
 char* decode_permutation(permutation p) {
     char* to_return = (char*) malloc(p.length * sizeof(char) + 1);
     
+    if(p.char_permutation[0] == '\0') {
+        to_return[0] = '\0';
+        return to_return;
+    }
+
+
+    int flag = 0;
+    if(strcmp(p.char_permutation, "usl") == 0) {
+        flag = 1;
+    }
+
     for(size_t i = 0; i < p.length; i++) {
         to_return[p.int_permutation[i]] = p.char_permutation[i];
     }
 
     to_return[p.length] = '\0';
+    if(flag) {
+        printf("Decoded: %s\n", to_return);
+    }
+    // printf("Decoding: %s -> %s\n", p.char_permutation, to_return);
     return to_return;
 }
 
@@ -77,7 +89,10 @@ void print_permutation(permutation p) {
     for(i = 0; p.char_permutation[i] != '\0'; i++)
         printf("%d ", p.int_permutation[i]);
 
+    char* decoded = decode_permutation(p);
     printf(" length: %ld\n", i);
-    printf("Word: %s\n", p.char_permutation);
+    printf("Word: %s -> %s\n", decoded, p.char_permutation);
+
+    free(decoded);
 }
 

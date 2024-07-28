@@ -11,8 +11,9 @@
 
 int main(void) {
     char input_filename[] = "files/file.txt";
-    char output_filename[] = "files/verification.txt";
-    int process_count = 4;
+    char permutations_filename[] = "files/permutations.txt";
+    char encoded_filename[] = "files/encoded.txt";
+    int process_count = 30;
 
     process_segment_info* segments = get_segments_for_file(input_filename, process_count);
 
@@ -27,6 +28,11 @@ int main(void) {
         perror("Error encoding file");
         return 1;
     }
+
+    // permutation p = random_permutation(input_filename);
+    // print_permutation(p);
+    // char* decoded = decode_permutation(p);
+    // printf("%s", decoded);
 
     return 0;
 }

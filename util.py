@@ -13,7 +13,7 @@ def format_file(filename):
     with open(filename, 'w') as f:
         f.write(text)
 
-format_file('file.txt')
+format_file('files/file.txt')
 
 def compare_files(first, second):
     with open(first, 'r') as f:
@@ -21,9 +21,11 @@ def compare_files(first, second):
     with open(second, 'r') as f:
         second_text = f.read()
     
-    for word1, word2 in zip(first_text.split(), second_text.split()):
+    chars = 0
+    for _, (word1, word2) in enumerate(zip(first_text.split(), second_text.split())):
+        chars += len(word2) + 1
         if word1 != word2:
-            print(word1, word2, sep=' | ')
+            print(word1, word2, chars, sep=' | ')
             return False
 
-compare_files('file.txt', 'decoded.txt')
+compare_files('files/file.txt', 'files/verification.txt')
