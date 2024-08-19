@@ -11,7 +11,8 @@ permutation create_permutation(char* word, int* sequence) {
     strcpy(p.char_permutation, word);
     memcpy(p.int_permutation, sequence, input_size * sizeof(int));
     p.length = input_size;
-
+    // printf("Creating permutation: %s\n", p.char_permutation);
+    // print_permutation(p);
     return p;
 }
 
@@ -27,9 +28,6 @@ permutation create_empty_permutation(char* word) {
     }
 
     return p;
-}
-
-void free_permutation(permutation p) {
 }
 
 permutation random_permutation(char* word) {
@@ -65,19 +63,13 @@ char* decode_permutation(permutation p) {
     }
 
 
-    int flag = 0;
-    if(strcmp(p.char_permutation, "usl") == 0) {
-        flag = 1;
-    }
+
 
     for(size_t i = 0; i < p.length; i++) {
         to_return[p.int_permutation[i]] = p.char_permutation[i];
     }
 
     to_return[p.length] = '\0';
-    if(flag) {
-        printf("Decoded: %s\n", to_return);
-    }
     // printf("Decoding: %s -> %s\n", p.char_permutation, to_return);
     return to_return;
 }
@@ -92,7 +84,32 @@ void print_permutation(permutation p) {
     char* decoded = decode_permutation(p);
     printf(" length: %ld\n", i);
     printf("Word: %s -> %s\n", decoded, p.char_permutation);
-
+    printf("-------------\n");
     free(decoded);
 }
 
+int_permutation decode_int_permutation(char* encoded) {
+    size_t length = strlen(encoded);
+    int_permutation to_return;
+
+    to_return.int_permutation = (int*) malloc(length * sizeof(int));
+    to_return.length = length;
+
+    // encoded: 10-3-5-2-1-4-0-6-7-8-9
+
+    size_t index = 0;
+    size_t i = 0;
+    while(i < length) {
+        int number = 0;
+        while(encoded[i] != '-' && i < length) {
+            number = number * 10 + (encoded[i] - '0');
+            i++;
+        }
+
+        to_return.int_permutation[index++] = number;
+        i++;
+    }
+
+    to_return.length = index;
+    return to_return;
+}

@@ -17,6 +17,13 @@ permutation create_empty_permutation(char*);
 permutation random_permutation(char*);
 char* decode_permutation(permutation);
 
+typedef struct {
+    int* int_permutation;
+    size_t length;
+} int_permutation;
+
+int_permutation decode_int_permutation(char*);
+
 void free_permutation(permutation);
 
 void print_permutation(permutation);
