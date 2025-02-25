@@ -14,6 +14,8 @@
 
 #include "../headers/random_permutation.h"
 
+extern bool IS_DEBUG_ENABLED;
+
 void write_permutations_to_file(
     const char *permutations_filename,
     const char *encoded_filename,
@@ -128,7 +130,9 @@ int encode_multiprocess(
         total_words += segments[i].no_of_words;
     }
 
-    printf("Total words to process: %zu\n", total_words);
+    if (IS_DEBUG_ENABLED) {
+        printf("Total words to process: %zu\n", total_words);
+    }
 
     // Create shared memory for permutations
     size_t shm_size =
@@ -211,9 +215,11 @@ int encode_multiprocess(
             char *segment_start = input_map + segments[process_no].begin_offset;
             char *segment_end = input_map + segments[process_no].end_offset;
 
-            printf("Child %d: Starting at offset %ld, expected to process %d words\n",
-                         process_no, segments[process_no].begin_offset,
-                         segments[process_no].no_of_words);
+            if (IS_DEBUG_ENABLED) {
+                printf("Child %d: Starting at offset %ld, expected to process %d words\n",
+                            process_no, segments[process_no].begin_offset,
+                            segments[process_no].no_of_words);
+            }
 
             // Process words in this segment
             char buffer[MAX_PERMUTATION_LENGTH];
@@ -244,7 +250,7 @@ int encode_multiprocess(
                         child_shared_memory->permutations[start_index + index] =
                                 random_permutation(buffer);
 
-                        if (index < 5 || index % 1000 == 0) {
+                        if (IS_DEBUG_ENABLED && (index < 5 || index % 1000 == 0)) {
                             printf("Child %d: Processed word %zu: '%s'\n", process_no, index,
                                          buffer);
                         }
@@ -273,8 +279,10 @@ int encode_multiprocess(
                 }
             }
 
+            if (IS_DEBUG_ENABLED) {
             printf("Child %d: Finished at offset %ld, processed %zu words\n",
                          process_no, current - input_map, index);
+            }
 
             munmap(child_shared_memory, shm_size);
             exit(0);
@@ -284,8 +292,10 @@ int encode_multiprocess(
         }
     }
 
-    // Wait for child processes
-    printf("Parent: Waiting for child processes to complete\n");
+    if (IS_DEBUG_ENABLED) {
+        // Wait for child processes
+        printf("Parent: Waiting for child processes to complete\n");
+    }
 
     for (int i = 0; i < no_of_processes; i++) {
         int status;
@@ -296,16 +306,20 @@ int encode_multiprocess(
             continue;
         }
 
-        if (WIFEXITED(status)) {
-            printf("Child process %d (PID %d) exited with status %d\n", i,
-                         child_pids[i], WEXITSTATUS(status));
-        } else if (WIFSIGNALED(status)) {
-            printf("Child process %d (PID %d) terminated by signal %d\n", i,
-                         child_pids[i], WTERMSIG(status));
+        if (IS_DEBUG_ENABLED) {
+            if (WIFEXITED(status)) {
+                printf("Child process %d (PID %d) exited with status %d\n", i,
+                            child_pids[i], WEXITSTATUS(status));
+            } else if (WIFSIGNALED(status)) {
+                printf("Child process %d (PID %d) terminated by signal %d\n", i,
+                            child_pids[i], WTERMSIG(status));
+            }
         }
     }
 
-    printf("Parent: All child processes completed, writing output\n");
+    if (IS_DEBUG_ENABLED) {
+        printf("Parent: All child processes completed, writing output\n");
+    }
 
     // Write results to file
     write_permutations_to_file(permutations_filename, encoded_filename,
@@ -390,8 +404,10 @@ int decode_multiprocess(
         permutations_words++;
     }
 
-    printf("Found %zu words in encoded file and %zu in permutations file\n",
-                 encoded_words, permutations_words);
+    if (IS_DEBUG_ENABLED) {
+        printf("Found %zu words in encoded file and %zu in permutations file\n",
+                    encoded_words, permutations_words);
+    }
 
     if (encoded_words != permutations_words) {
         fprintf(stderr,
@@ -494,8 +510,10 @@ int decode_multiprocess(
         word_index++;
     }
 
-    printf("Read %zu encoded words and %zu permutation strings\n", word_index,
-                 word_index);
+    if (IS_DEBUG_ENABLED) {
+        printf("Read %zu encoded words and %zu permutation strings\n", word_index,
+                    word_index);
+    }
 
     // Now decode the words sequentially
     int error_count = 0;
@@ -554,7 +572,7 @@ int decode_multiprocess(
 
             success_count++;
 
-            if (i % 1000 == 0) {
+            if (IS_DEBUG_ENABLED && i % 1000 == 0) {
                 printf("Decoded word %zu: '%s' -> '%s'\n", i, encoded_words_array[i],
                              decoded);
             }
@@ -570,8 +588,10 @@ int decode_multiprocess(
         }
     }
 
-    printf("Decoding completed: %d successes, %d errors\n", success_count,
-                 error_count);
+    if (IS_DEBUG_ENABLED) {
+        printf("Decoding completed: %d successes, %d errors\n", success_count,
+                    error_count);
+    }
 
     // Clean up
     for (size_t i = 0; i < total_words; i++) {

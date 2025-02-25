@@ -10,6 +10,8 @@
 #include "headers/random_permutation.h"
 #include "headers/segmentation.h"
 
+const bool IS_DEBUG_ENABLED = false;
+
 // Test function to verify permutation encoding/decoding works correctly
 void test_permutation_functions() {
     printf("\n==== Testing Permutation Functions ====\n");
@@ -106,16 +108,19 @@ void verify_file_integrity(const char *original_file,
 }
 
 int main(void) {
+    if (IS_DEBUG_ENABLED) {
+        printf("Debugging is enabled\n");
+        test_permutation_functions();
+    }
     // Test the permutation functions first to verify they work correctly
-    test_permutation_functions();
 
-    char input_filename[] = "files/file.txt";
+    char input_filename[] = "files/verification.txt";
     char permutations_filename[] = "files/permutations.txt";
     char encoded_filename[] = "files/encoded.txt";
     char output_filename[] = "files/decoded.txt";
 
     // Number of processes to use - you can change this to increase parallelism
-    int process_count = 30;    // Try with 2 processes initially
+    int process_count = 40;    // Try with 2 processes initially
 
     // Create a simple test file if it doesn't exist
     FILE *test_file = fopen(input_filename, "r");
@@ -145,10 +150,11 @@ int main(void) {
                  process_count);
     printf("Input file: %s\n", input_filename);
     printf("Output files: %s and %s\n", encoded_filename, permutations_filename);
+    fflush(stdout);
 
     // Display input file content
     test_file = fopen(input_filename, "r");
-    if (test_file != NULL) {
+    if (test_file != NULL && IS_DEBUG_ENABLED) {
         printf("\nInput file content:\n");
         char buffer[1024];
         while (fgets(buffer, sizeof(buffer), test_file) != NULL) {
@@ -166,10 +172,12 @@ int main(void) {
         return 1;
     }
 
-    printf("\nSegment information:\n");
-    for (int i = 0; i < process_count; i++) {
-        print_segment_info(segments[i]);
-        printf("\n");
+    if (IS_DEBUG_ENABLED) {
+        printf("\nSegment information:\n");
+        for (int i = 0; i < process_count; i++) {
+            print_segment_info(segments[i]);
+            printf("\n");
+        }
     }
 
     printf("Is file segmented correctly: %s\n",
@@ -178,23 +186,29 @@ int main(void) {
                          : "No");
 
     printf("\n==== ENCODING ====\n");
-    int encode_result =
-            encode_multiprocess(input_filename, permutations_filename,
-                                                    encoded_filename, segments, process_count);
+    fflush(stdout);
+    int encode_result = encode_multiprocess(
+        input_filename, 
+        permutations_filename,
+        encoded_filename, segments,
+        process_count
+    );
     if (encode_result == -1) {
         perror("Error encoding file");
         free(segments);
         return 1;
     }
 
-    // Add debugging to check the created files
-    printf("\nChecking created files...\n");
+    if (IS_DEBUG_ENABLED) {
+        // Add debugging to check the created files
+        printf("\nChecking created files...\n");
+    }
 
     // Check encoded file
     test_file = fopen(encoded_filename, "r");
     if (test_file == NULL) {
         perror("Encoded file was not created");
-    } else {
+    } else if (IS_DEBUG_ENABLED) {
         printf("Encoded file content:\n");
         char buffer[1024];
         while (fgets(buffer, sizeof(buffer), test_file) != NULL) {
@@ -207,7 +221,7 @@ int main(void) {
     test_file = fopen(permutations_filename, "r");
     if (test_file == NULL) {
         perror("Permutations file was not created");
-    } else {
+    } else if (IS_DEBUG_ENABLED) {
         printf("\nPermutations file content:\n");
         char buffer[1024];
         while (fgets(buffer, sizeof(buffer), test_file) != NULL) {
@@ -226,10 +240,12 @@ int main(void) {
         return 1;
     }
 
-    printf("\nEncoded file segment information:\n");
-    for (int i = 0; i < process_count; i++) {
-        print_segment_info(segments2[i]);
-        printf("\n");
+    if (IS_DEBUG_ENABLED) {
+        printf("\nEncoded file segment information:\n");
+        for (int i = 0; i < process_count; i++) {
+            print_segment_info(segments2[i]);
+            printf("\n");
+        }
     }
 
     int decode_result =
@@ -246,7 +262,7 @@ int main(void) {
     test_file = fopen(output_filename, "r");
     if (test_file == NULL) {
         perror("Output file was not created");
-    } else {
+    } else if (IS_DEBUG_ENABLED) {
         printf("\nDecoded output file content:\n");
         char buffer[1024];
         while (fgets(buffer, sizeof(buffer), test_file) != NULL) {
@@ -260,6 +276,8 @@ int main(void) {
 
     printf("\n==== Process completed ====\n");
 
-    verify_file_integrity(input_filename, output_filename);
+    if (IS_DEBUG_ENABLED) {
+        verify_file_integrity(input_filename, output_filename);
+    }
     return 0;
 }
