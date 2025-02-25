@@ -44,6 +44,9 @@ clean:
 run: $(TARGET)
 	./$(TARGET)
 
+# Build from scratch
+rebuild: clean all
+
 # Debug info
 debug:
 	@echo "Sources: $(SOURCES)"

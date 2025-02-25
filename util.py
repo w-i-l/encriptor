@@ -1,4 +1,5 @@
 import re
+import random
 
 def format_file(filename):
 
@@ -27,5 +28,27 @@ def compare_files(first, second):
         if word1 != word2:
             print(word1, word2, chars, sep=' | ')
             return False
+        
 
-compare_files('files/file.txt', 'files/verification.txt')
+def generate_file(filename, number_of_words):
+    '''
+    Generate a file with random words, with the number of words specified.
+    The words are separated by spaces.
+    They can contain letters, numbers, and only , . ? !
+    No new lines.
+    The length of the words is random, between 1 and 20 characters.
+    '''
+
+    allowed_chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,?!'
+
+    with open(filename, 'w') as f:
+        for _ in range(number_of_words):
+            word = ''.join(random.choices(allowed_chars, k=random.randint(1, 20)))
+            f.write(word + (' ' if _ < number_of_words - 1 else ''))
+
+
+
+# compare_files('files/file.txt', 'files/verification.txt')
+# format_file('files/verification.txt')
+
+generate_file('files/verification.txt', 1_000_000)

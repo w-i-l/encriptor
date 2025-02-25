@@ -1,23 +1,27 @@
-#include "../headers/segmentation.h"
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
 
+#include "../headers/segmentation.h"
+
+
 void print_segment_info(process_segment_info info) {
     printf("Segment info:\n");
     printf("Number of words: %d\n", info.no_of_words);
     printf("Number of characters: %d\n", info.no_of_chars);
-    printf("Begin offset: %lu\n", info.begin_offset);
+    printf("Begin offset: %elu\n", info.begin_offset);
     printf("End offset: %lu\n", info.end_offset);
     printf("Segment length: %lu\n", info.segment_length);
 }
 
-process_segment_info* get_segments_for_file(const char* filenmae, int no_of_processes) {
-    FILE* file = fopen(filenmae, "r");
-    if(file == NULL) {
-        perror("Error opening file");
+
+process_segment_info *get_segments_for_file(const char *filename, int no_of_processes)
+{
+    FILE *file = fopen(filename, "r");
+    if (file == NULL)
+    {
+        perror("Error opening file for segmentation");
         return NULL;
     }
 
@@ -25,57 +29,122 @@ process_segment_info* get_segments_for_file(const char* filenmae, int no_of_proc
     size_t file_size = ftell(file);
     fseek(file, 0, SEEK_SET);
 
-    process_segment_info* segments = (process_segment_info*) malloc(no_of_processes * sizeof(process_segment_info));
-    if(segments == NULL) {
+    // Allocate segments with proper initialization
+    process_segment_info *segments = (process_segment_info *)calloc(no_of_processes, sizeof(process_segment_info));
+    if (segments == NULL)
+    {
         perror("Error allocating memory for segments");
+        fclose(file);
         return NULL;
     }
 
-    size_t max_segment_size = file_size / no_of_processes;
+    // Calculate approximate segment size
+    size_t approx_segment_size = file_size / no_of_processes;
+    printf("File size: %zu, Approximate segment size: %zu\n", file_size, approx_segment_size);
+
+    // Process each segment
     size_t current_offset = 0;
-
-    char buffer[1024] = {0};
-
-    for(int i = 0; i < no_of_processes; i++) {
+    for (int i = 0; i < no_of_processes; i++)
+    {
         segments[i].begin_offset = current_offset;
-        segments[i].no_of_words = 0;
-        segments[i].no_of_chars = 0;
 
-        if(buffer[0] != '\0') {
-            segments[i].begin_offset -= strlen(buffer);
-            segments[i].no_of_words++;
-            segments[i].no_of_chars += strlen(buffer);
-        }
+        // Determine where this segment should approximately end
+        size_t target_end = (i == no_of_processes - 1) ? file_size : // Last segment goes to end of file
+                                segments[i].begin_offset + approx_segment_size;
 
-        while(fscanf(file, "%1023s", buffer) == 1) {
-            size_t word_size = strlen(buffer);
-            // printf("Word size: %ld\n", word_size);
+        // Find a word boundary near the target end
+        // First seek to target position
+        fseek(file, target_end, SEEK_SET);
 
-            size_t current_chars = segments[i].no_of_chars + segments[i].no_of_words + word_size;
-            if(i != no_of_processes - 1 && current_chars > max_segment_size) {
-                segments[i].end_offset = ftell(file) - word_size;
-                break;
-            } else if(ftell(file) == max_segment_size) {
-                buffer[0] = '\0';
-                segments->end_offset = ftell(file);
-            } else if(i == no_of_processes - 1 && feof(file)) {
-                segments[i].end_offset = ftell(file);
+        // If not at end of file, find the next word boundary
+        if (target_end < file_size)
+        {
+            // Search forward for next complete word boundary (space or newline)
+            int c;
+            while ((c = fgetc(file)) != EOF && c != ' ' && c != '\n' && c != '\t')
+            {
+                target_end++;
             }
 
-            segments[i].no_of_words++;
-            segments[i].no_of_chars += word_size;
-
+            // Include the boundary character in this segment
+            if (c != EOF)
+            {
+                target_end++;
+            }
         }
-        
-        segments[i].segment_length = segments[i].no_of_chars + segments[i].no_of_words;
-        current_offset = ftell(file);
+
+        segments[i].end_offset = target_end;
+        segments[i].segment_length = segments[i].end_offset - segments[i].begin_offset;
+
+        // Now count words and characters in this segment
+        fseek(file, segments[i].begin_offset, SEEK_SET);
+
+        size_t word_count = 0;
+        size_t char_count = 0;
+        int in_word = 0;
+
+        for (size_t pos = segments[i].begin_offset; pos < segments[i].end_offset; pos++)
+        {
+            int c = fgetc(file);
+            if (c == EOF)
+                break;
+
+            char_count++;
+
+            // Word boundary detection
+            if (c == ' ' || c == '\n' || c == '\t')
+            {
+                if (in_word)
+                {
+                    word_count++;
+                    in_word = 0;
+                }
+            }
+            else
+            {
+                in_word = 1;
+            }
+        }
+
+        // Count the last word if we were in one
+        if (in_word)
+        {
+            word_count++;
+        }
+
+        segments[i].no_of_words = word_count;
+        segments[i].no_of_chars = char_count;
+
+        printf("Segment %d: begin=%zu, end=%zu, length=%zu, words=%d, chars=%d\n",
+               i, segments[i].begin_offset, segments[i].end_offset,
+               segments[i].segment_length, segments[i].no_of_words, segments[i].no_of_chars);
+
+        // Prepare for next segment
+        current_offset = segments[i].end_offset;
+    }
+
+    // Verify segments are created correctly
+    for (int i = 0; i < no_of_processes - 1; i++)
+    {
+        if (segments[i].end_offset != segments[i + 1].begin_offset)
+        {
+            fprintf(stderr, "Warning: Segment boundary mismatch between segments %d and %d\n", i, i + 1);
+            fprintf(stderr, "Segment %d ends at %zu but segment %d begins at %zu\n",
+                    i, segments[i].end_offset, i + 1, segments[i + 1].begin_offset);
+        }
     }
 
     fclose(file);
     return segments;
 }
 
-void copy_file_segment(const char* input_filename, const char* output_filename, process_segment_info* segments, int no_of_processes) {
+
+void copy_file_segment(
+    const char* input_filename, 
+    const char* output_filename, 
+    process_segment_info* segments, 
+    int no_of_processes
+) {
     FILE* input = fopen(input_filename, "r");
     if(input == NULL) {
         perror("Error opening input file");
@@ -110,7 +179,12 @@ void copy_file_segment(const char* input_filename, const char* output_filename, 
     fclose(output);
 }
 
-bool is_file_segmented_correctly(const char* filename, process_segment_info* segments, int no_of_processes) {
+
+bool is_file_segmented_correctly(
+    const char* filename, 
+    process_segment_info* segments, 
+    int no_of_processes
+) {
     FILE* file = fopen(filename, "r");
     if(file == NULL) {
         perror("Error opening file");
