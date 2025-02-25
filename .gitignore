@@ -60,3 +60,6 @@ main
 # C++
 *.c++
 *.cpp
+
+# Visual Studio Code
+.vscode/
